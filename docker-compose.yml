@@ -1,0 +1,50 @@
+version: "2"
+services:
+    app:
+        build: .
+        expose:
+            - 9000
+        volumes:
+            - ".:/var/www"
+        links:
+            - mysql
+            - redis
+        environment:
+            - WAIT_SLEEP=3
+            - WAIT_LOOPS=20
+        networks:
+            - back-tier
+    web:
+        image: rpaddock/nginx 
+        links:
+            - "app"
+        volumes_from:
+            - app
+        ports:
+            - "5000:80"
+        networks:
+            - front-tier
+            - back-tier
+    mysql:
+        image: mysql
+        environment:
+            - MYSQL_ROOT_PASSWORD=securepass
+            - MYSQL_DATABASE=app
+            - MYSQL_USER=app
+            - MYSQL_PASSWORD=apppass
+    redis:
+        image: "redis:alpine"
+        volumes:
+            - redis-data:/var/lib/redis
+        networks:
+            - back-tier
+volumes:
+    mysql-data:
+        driver: local
+    redis-data:
+        driver: local
+networks:
+    front-tier:
+        driver: bridge
+    back-tier:
+        driver: bridge
